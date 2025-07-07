@@ -96,7 +96,7 @@ export const torvaldssalesforce = createAction({
       
       let finalResult = apiResponse.data;
       if (outputProcessingCode) {
-        const outputProcessingFn = new Function('context', `return (async () => { ${outputProcessingCode} })().call(null, context)`);
+        const outputProcessingFn = new Function('context', `return (async () => { ${outputProcessingCode} })();`);
         finalResult = await outputProcessingFn({
           originalInput: previousNodeOutput,
           processedInput: processedInput,

@@ -113,7 +113,7 @@ export const torvaldsopenai = createAction({
       });
 
       if (outputProcessingCode) {
-        const outputFn = new Function('context', `return (async () => { ${outputProcessingCode} })().call(null, context)`);
+        const outputFn = new Function('context', `return (async () => { ${outputProcessingCode} })();`);
         return await outputFn({
           originalInput: previousNodeOutput,
           processedInput: processedInput,
