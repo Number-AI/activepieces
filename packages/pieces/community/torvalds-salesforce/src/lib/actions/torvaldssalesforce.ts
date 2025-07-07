@@ -6,16 +6,16 @@ export const torvaldssalesforce = createAction({
   displayName: 'TorvaldsSalesforce',
   description: 'Execute SOQL queries in Salesforce using your Torvalds organization configuration',
   props: {
-    organizationId: Property.ShortText({
-      displayName: 'Organization ID',
-      description: 'The Torvalds organization ID to fetch Salesforce configuration',
+    previousNodeOutput: Property.Json({
+      displayName: 'Previous Node Output (for context)',
+      description: 'The full output from the previous node. Use this to map data into the prompts below.',
       required: true,
     }),
     apiEndpoint: Property.ShortText({
       displayName: 'API Endpoint',
       description: 'Torvalds API endpoint to fetch organization configuration',
       required: true,
-      defaultValue: 'https://api.torvalds.dev/api/automation/get_config_details',
+      defaultValue: 'https://api.torvalds.dev/api/n8n/get_config_details',
     }),
     soqlQuery: Property.LongText({
       displayName: 'SOQL Query',
@@ -27,48 +27,39 @@ export const torvaldssalesforce = createAction({
       displayName: 'Input Processing',
       description: 'JavaScript code to process input data before executing query',
       required: false,
-      defaultValue: `// Example: Extract data from previous steps
-return { 
-  accountName: inputData.accountName 
-};`
+      defaultValue: ''
     }),
     outputProcessingCode: Property.LongText({
       displayName: 'Output Processing',
       description: 'JavaScript code to process Salesforce response',
       required: false,
-      defaultValue: `// Example: Format API response
-return { 
-  ...inputData,
-  records: apiResponse.records,
-  done: apiResponse.done,
-  totalSize: apiResponse.totalSize 
-};`
+      defaultValue: ''
     })
   },
-  async run(context) {
+  async run(context: any) {
     const {
-      organizationId,
       apiEndpoint,
       soqlQuery,
       inputProcessingCode,
-      outputProcessingCode
+      outputProcessingCode,
+      previousNodeOutput
     } = context.propsValue;
 
     try {
       // Process the input data
-      let processedInput = context.propsValue;
+      let processedInput = previousNodeOutput;
       if (inputProcessingCode) {
         const inputProcessingFn = new Function(
           'inputData', 
           inputProcessingCode
         );
-        processedInput = inputProcessingFn(context.propsValue);
+        processedInput = inputProcessingFn(previousNodeOutput);
         console.log('Processed input:', processedInput);
       }
 
       // Get Salesforce config from organization config
       const configResponse = await axios.post(apiEndpoint, {
-        organizationId: organizationId
+        organizationId: processedInput.organizationId
       });
       
       const orgConfig = configResponse.data.organizationConfig;
@@ -77,17 +68,15 @@ return {
         throw new Error('Salesforce credentials not found in organization config');
       }
 
-      // Process SOQL query with template variables
-      const processedQuery = soqlQuery.replace(/\{\{(.*?)\}\}/g, (match, p1) => {
+      const processedQuery = soqlQuery.replace(/\{\{(.*?)\}\}/g, (match: any, p1: any) => {
         try {
           return eval(`processedInput.${p1.trim()}`);
-        } catch (e) {
+        } catch (e: any) {
           console.error(`Failed to evaluate template: ${p1}`, e);
           return match;
         }
       });
       
-      // Execute the SOQL query
       const accessToken = orgConfig.salesforce_access_token;
       const instanceUrl = orgConfig.salesforce_instance_url;
       const apiVersion = '57.0';
@@ -95,7 +84,7 @@ return {
       console.log('Executing SOQL query:', processedQuery);
       
       const encodedQuery = encodeURIComponent(processedQuery);
-      const salesforceResponse = await axios.get(
+      const apiResponse = await axios.get(
         `${instanceUrl}/services/data/v${apiVersion}/query/?q=${encodedQuery}`,
         {
           headers: {
@@ -105,22 +94,18 @@ return {
         }
       );
       
-      // Process the output
+      let finalResult = apiResponse.data;
       if (outputProcessingCode) {
-        const outputProcessingFn = new Function(
-          'apiResponse',
-          'inputData',
-          outputProcessingCode
-        );
-        
-        return outputProcessingFn(salesforceResponse.data, processedInput);
+        const outputProcessingFn = new Function('context', `return (async () => { ${outputProcessingCode} })().call(null, context)`);
+        finalResult = await outputProcessingFn({
+          originalInput: previousNodeOutput,
+          processedInput: processedInput,
+          apiResponse: apiResponse.data
+        });
       }
-      
-      return {
-        ...processedInput,
-        apiResponse: salesforceResponse.data
-      };
-      
+
+      return finalResult;
+
     } catch (error) {
       console.error('Error in TorvaldsSalesforce:', error);
       throw error;
