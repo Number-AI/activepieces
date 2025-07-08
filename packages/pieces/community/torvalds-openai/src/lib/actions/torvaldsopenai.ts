@@ -17,11 +17,6 @@ export const torvaldsopenai = createAction({
       required: true,
       defaultValue: 'https://api.torvalds.dev/api/n8n/get_config_details',
     }),
-    inputProcessingCode: Property.LongText({
-      displayName: 'Input Processing Code',
-      description: 'JavaScript code to process input data. Must return an object.',
-      required: false,
-    }),
     endpointType: Property.StaticDropdown({
         displayName: 'OpenAI Endpoint',
         description: 'The type of OpenAI API to call.',
@@ -46,13 +41,8 @@ export const torvaldsopenai = createAction({
     }),
     userPrompt: Property.LongText({
         displayName: 'User Prompt / Input Text',
-        description: 'The user message. Use {{variable}} for data from Input Processing.',
+        description: 'The user message.',
         required: true,
-    }),
-    outputProcessingCode: Property.LongText({
-      displayName: 'Output Processing Code',
-      description: 'JavaScript code to process the final result.',
-      required: false,
     }),
   },
 
@@ -60,22 +50,14 @@ export const torvaldsopenai = createAction({
     const {
       previousNodeOutput,
       apiEndpoint,
-      inputProcessingCode,
       endpointType,
       model,
       systemPrompt,
       userPrompt,
-      outputProcessingCode
     } = context.propsValue;
 
     try {
-      let processedInput: any = previousNodeOutput;
-      if (inputProcessingCode) {
-        const inputFn = new Function('inputData', inputProcessingCode);
-        processedInput = inputFn(previousNodeOutput);
-      }
-      
-      const organizationId = processedInput.organizationId;
+      const organizationId = previousNodeOutput['organizationId'];
       if (!organizationId) {
         throw new Error("Input Processing must return an object with an 'organizationId'.");
       }
@@ -86,10 +68,6 @@ export const torvaldsopenai = createAction({
         throw new Error('OpenAI API key not found in organization config.');
       }
 
-      const processedUserPrompt = userPrompt.replace(/\{\{(.*?)\}\}/g, (_, path) => 
-        path.trim().split('.').reduce((o: any, key: string) => o?.[key], processedInput) ?? ''
-      );
-
       let apiUrl = '';
       let requestBody = {};
 
@@ -99,7 +77,7 @@ export const torvaldsopenai = createAction({
             model: model,
             messages: [
               { role: 'system', content: systemPrompt },
-              { role: 'user', content: processedUserPrompt }
+              { role: 'user', content: userPrompt }
             ],
             temperature: 0.2,
             response_format: { type: "json_object" }
@@ -112,16 +90,7 @@ export const torvaldsopenai = createAction({
         headers: { 'Authorization': `Bearer ${openai_api_key}` }
       });
 
-      if (outputProcessingCode) {
-        const outputFn = new Function('context', `return (async () => { ${outputProcessingCode} })();`);
-        return await outputFn({
-          originalInput: previousNodeOutput,
-          processedInput: processedInput,
-          apiResponse: apiResponse.data
-        });
-      }
-
-      return { ...processedInput, ...JSON.parse(apiResponse.data.choices[0].message.content || '{}') };
+      return { ...JSON.parse(apiResponse.data.choices[0].message.content || '{}') };
 
     } catch (error: any) {
       const errorMessage = error.response?.data?.error?.message || error.message;

@@ -21,18 +21,6 @@ export const torvaldssalesforce = createAction({
       displayName: 'SOQL Query',
       description: 'The SOQL query to execute. Use {{variable}} for dynamic values',
       required: true,
-      defaultValue: 'SELECT Id, Name FROM Account LIMIT 10'
-    }),
-    inputProcessingCode: Property.LongText({
-      displayName: 'Input Processing',
-      description: 'JavaScript code to process input data before executing query',
-      required: false,
-      defaultValue: ''
-    }),
-    outputProcessingCode: Property.LongText({
-      displayName: 'Output Processing',
-      description: 'JavaScript code to process Salesforce response',
-      required: false,
       defaultValue: ''
     })
   },
@@ -40,26 +28,14 @@ export const torvaldssalesforce = createAction({
     const {
       apiEndpoint,
       soqlQuery,
-      inputProcessingCode,
-      outputProcessingCode,
       previousNodeOutput
     } = context.propsValue;
 
     try {
-      // Process the input data
-      let processedInput = previousNodeOutput;
-      if (inputProcessingCode) {
-        const inputProcessingFn = new Function(
-          'inputData', 
-          inputProcessingCode
-        );
-        processedInput = inputProcessingFn(previousNodeOutput);
-        console.log('Processed input:', processedInput);
-      }
 
       // Get Salesforce config from organization config
       const configResponse = await axios.post(apiEndpoint, {
-        organizationId: processedInput.organizationId
+        organizationId: previousNodeOutput['organizationId']
       });
       
       const orgConfig = configResponse.data.organizationConfig;
@@ -67,23 +43,12 @@ export const torvaldssalesforce = createAction({
       if (!orgConfig || !orgConfig.salesforce_access_token || !orgConfig.salesforce_instance_url) {
         throw new Error('Salesforce credentials not found in organization config');
       }
-
-      const processedQuery = soqlQuery.replace(/\{\{(.*?)\}\}/g, (match: any, p1: any) => {
-        try {
-          return eval(`processedInput.${p1.trim()}`);
-        } catch (e: any) {
-          console.error(`Failed to evaluate template: ${p1}`, e);
-          return match;
-        }
-      });
       
       const accessToken = orgConfig.salesforce_access_token;
       const instanceUrl = orgConfig.salesforce_instance_url;
       const apiVersion = '57.0';
       
-      console.log('Executing SOQL query:', processedQuery);
-      
-      const encodedQuery = encodeURIComponent(processedQuery);
+      const encodedQuery = encodeURIComponent(soqlQuery);
       const apiResponse = await axios.get(
         `${instanceUrl}/services/data/v${apiVersion}/query/?q=${encodedQuery}`,
         {
@@ -95,17 +60,7 @@ export const torvaldssalesforce = createAction({
       );
       
       let finalResult = apiResponse.data;
-      if (outputProcessingCode) {
-        const outputProcessingFn = new Function('context', `return (async () => { ${outputProcessingCode} })();`);
-        finalResult = await outputProcessingFn({
-          originalInput: previousNodeOutput,
-          processedInput: processedInput,
-          apiResponse: apiResponse.data
-        });
-      }
-
       return finalResult;
-
     } catch (error) {
       console.error('Error in TorvaldsSalesforce:', error);
       throw error;
