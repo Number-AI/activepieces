@@ -126,28 +126,21 @@ const SignInForm: React.FC = () => {
     mutate(data);
   };
   
-  // Auto-login functionality
   useEffect(() => {    
-    // Check direct URL parameters first
     let autoEmail = searchParams.get('auto_email');
     let autoPassword = searchParams.get('auto_password');
     
-    // If not found directly, check if they're encoded in the 'from' parameter
     if ((!autoEmail || !autoPassword) && searchParams.has('from')) {
       try {
         const fromParam = searchParams.get('from') || '';
         
-        // Parse the 'from' parameter which might contain our parameters
         const fromUrl = new URLSearchParams(fromParam.startsWith('/') ? fromParam.substring(1) : fromParam);
         
-        // If that doesn't work, try decoding it first (it might be double-encoded)
         if (!fromUrl.has('auto_email')) {
           const decodedFrom = decodeURIComponent(fromParam);          
-          // Extract query string part if it exists
           const queryStringMatch = decodedFrom.match(/\?(.+)$/);
           if (queryStringMatch && queryStringMatch[1]) {
             const queryString = queryStringMatch[1];
-            console.log('Extracted query string:', queryString);
             const fromParams = new URLSearchParams(queryString);
             
             autoEmail = autoEmail || fromParams.get('auto_email');
@@ -163,16 +156,10 @@ const SignInForm: React.FC = () => {
     }
     
     if (autoEmail && autoPassword) {
-      console.log('Auto-login credentials found, attempting login...');
-      // Set form values
       form.setValue('email', autoEmail);
       form.setValue('password', autoPassword);
-      console.log('Form values set');
       
-      // Submit the form after a short delay to ensure values are set
-      console.log('Scheduling form submission...');
       setTimeout(() => {
-        console.log('Submitting form automatically...');
         form.handleSubmit(onSubmit)();
       }, 300);
     }
