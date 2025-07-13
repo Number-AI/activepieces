@@ -2,9 +2,9 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -43,6 +43,8 @@ type SignInSchema = Static<typeof SignInSchema>;
 
 const SignInForm: React.FC = () => {
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
+  const [searchParams] = useSearchParams();
+  
   const form = useForm<SignInSchema>({
     resolver: typeboxResolver(SignInSchema),
     defaultValues: {
@@ -123,6 +125,58 @@ const SignInForm: React.FC = () => {
     });
     mutate(data);
   };
+  
+  // Auto-login functionality
+  useEffect(() => {    
+    // Check direct URL parameters first
+    let autoEmail = searchParams.get('auto_email');
+    let autoPassword = searchParams.get('auto_password');
+    
+    // If not found directly, check if they're encoded in the 'from' parameter
+    if ((!autoEmail || !autoPassword) && searchParams.has('from')) {
+      try {
+        const fromParam = searchParams.get('from') || '';
+        
+        // Parse the 'from' parameter which might contain our parameters
+        const fromUrl = new URLSearchParams(fromParam.startsWith('/') ? fromParam.substring(1) : fromParam);
+        
+        // If that doesn't work, try decoding it first (it might be double-encoded)
+        if (!fromUrl.has('auto_email')) {
+          const decodedFrom = decodeURIComponent(fromParam);          
+          // Extract query string part if it exists
+          const queryStringMatch = decodedFrom.match(/\?(.+)$/);
+          if (queryStringMatch && queryStringMatch[1]) {
+            const queryString = queryStringMatch[1];
+            console.log('Extracted query string:', queryString);
+            const fromParams = new URLSearchParams(queryString);
+            
+            autoEmail = autoEmail || fromParams.get('auto_email');
+            autoPassword = autoPassword || fromParams.get('auto_password');
+          }
+        } else {
+          autoEmail = autoEmail || fromUrl.get('auto_email');
+          autoPassword = autoPassword || fromUrl.get('auto_password');
+        }
+      } catch (e) {
+        console.error('Error parsing from parameter:', e);
+      }
+    }
+    
+    if (autoEmail && autoPassword) {
+      console.log('Auto-login credentials found, attempting login...');
+      // Set form values
+      form.setValue('email', autoEmail);
+      form.setValue('password', autoPassword);
+      console.log('Form values set');
+      
+      // Submit the form after a short delay to ensure values are set
+      console.log('Scheduling form submission...');
+      setTimeout(() => {
+        console.log('Submitting form automatically...');
+        form.handleSubmit(onSubmit)();
+      }, 300);
+    }
+  }, [searchParams, form, onSubmit]);
 
   if (!userCreated) {
     return <Navigate to="/sign-up" />;
