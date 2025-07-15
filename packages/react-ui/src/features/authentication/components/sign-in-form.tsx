@@ -126,44 +126,33 @@ const SignInForm: React.FC = () => {
     mutate(data);
   };
   
-  useEffect(() => {    
-    let autoEmail = searchParams.get('auto_email');
-    let autoPassword = searchParams.get('auto_password');
-    
-    if ((!autoEmail || !autoPassword) && searchParams.has('from')) {
-      try {
-        const fromParam = searchParams.get('from') || '';
-        
-        const fromUrl = new URLSearchParams(fromParam.startsWith('/') ? fromParam.substring(1) : fromParam);
-        
-        if (!fromUrl.has('auto_email')) {
-          const decodedFrom = decodeURIComponent(fromParam);          
-          const queryStringMatch = decodedFrom.match(/\?(.+)$/);
-          if (queryStringMatch && queryStringMatch[1]) {
-            const queryString = queryStringMatch[1];
-            const fromParams = new URLSearchParams(queryString);
-            
-            autoEmail = autoEmail || fromParams.get('auto_email');
-            autoPassword = autoPassword || fromParams.get('auto_password');
-          }
-        } else {
-          autoEmail = autoEmail || fromUrl.get('auto_email');
-          autoPassword = autoPassword || fromUrl.get('auto_password');
+  useEffect(() => {
+    let encodedCredentials = searchParams.get('ap_credentials');
+
+    if (!encodedCredentials) {
+      const fromParam = searchParams.get('from');
+      if (fromParam) {
+        try {
+          const fromUrlParams = new URLSearchParams(fromParam.split('?')[1] || '');
+          encodedCredentials = fromUrlParams.get('ap_credentials');
+        } catch (e) {
+          console.error('Could not parse "from" parameter:', fromParam, e);
         }
-      } catch (e) {
-        console.error('Error parsing from parameter:', e);
       }
     }
-    
-    if (autoEmail && autoPassword) {
-      form.setValue('email', autoEmail);
-      form.setValue('password', autoPassword);
-      
-      setTimeout(() => {
-        form.handleSubmit(onSubmit)();
-      }, 300);
+
+    if (encodedCredentials) {
+      try {
+        const decodedString = atob(encodedCredentials);
+        const credentials = JSON.parse(decodedString);
+        if (credentials.email && credentials.password) {
+          onSubmit({ email: credentials.email, password: credentials.password });
+        }
+      } catch (e) {
+        console.error('Failed to decode auto-login credentials:', e);
+      }
     }
-  }, [searchParams, form, onSubmit]);
+  }, [searchParams]);
 
   if (!userCreated) {
     return <Navigate to="/sign-up" />;
