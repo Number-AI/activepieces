@@ -37,7 +37,7 @@ const setFavicon = (url: string) => {
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'system',
+  defaultTheme = 'dark',
   storageKey = 'ap-ui-theme',
   ...props
 }: ThemeProviderProps) {
