@@ -206,7 +206,7 @@ export function SidebarComponent({
                     </React.Fragment>
                   ))}
 
-                  <SidebarGroup>
+                  {/* <SidebarGroup>
                     <SidebarGroupLabel>{t('Misc')}</SidebarGroupLabel>
                     <SidebarMenu>
                       <SidebarMenuItem>
@@ -229,7 +229,7 @@ export function SidebarComponent({
                         </SidebarMenuItem>
                       )}
                     </SidebarMenu>
-                  </SidebarGroup>
+                  </SidebarGroup> */}
                 </ScrollArea>
               </SidebarContent>
               <SidebarFooter className="pb-4">

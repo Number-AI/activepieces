@@ -150,12 +150,12 @@ export function DashboardContainer({
   };
 
   const items: SidebarItem[] = [
-    agentsLink,
+    // agentsLink,
     flowsLink,
-    tablesLink,
-    mcpLink,
-    todosLink,
-    releasesLink,
+    // tablesLink,
+    // mcpLink,
+    // todosLink,
+    // releasesLink,
   ]
     .filter(embedFilter)
     .filter(permissionFilter)
