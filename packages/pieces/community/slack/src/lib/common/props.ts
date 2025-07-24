@@ -141,3 +141,9 @@ export async function getChannels(accessToken: string) {
 
   return channels;
 }
+
+export const previousNodeOutput = Property.Json({
+    displayName: 'Node Input',
+    description: 'The full output from the previous node, e.g., {{trigger}}.',
+    required: true,
+});
