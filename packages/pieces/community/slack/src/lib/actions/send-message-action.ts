@@ -38,21 +38,22 @@ export const slackSendMessageAction = createAction({
       displayName: 'Attachment',
       required: false,
     }),
-    // threadTs: Property.ShortText({
-    //   displayName: 'Thread ts',
-    //   description:
-    //     'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
-    //   required: false,
-    // }),
+    threadTs: Property.ShortText({
+      displayName: 'Thread ts',
+      description:
+        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
+      required: false,
+      defaultValue: `{{trigger.body.threadTs}}`
+    }),
     blocks,
   },
   async run(context) {
     // const token = context.auth.access_token;
-    const { text, previousNodeOutput, username, profilePicture, file,blocks, apiEndpoint } = context.propsValue;
+    const { text, previousNodeOutput, username, profilePicture, threadTs, file,blocks, apiEndpoint } = context.propsValue;
 
     const organizationId = previousNodeOutput['organizationId'] as string;
     const channelId = previousNodeOutput['channelId'] as string;
-    const threadTs = previousNodeOutput['threadTs'] as string;
+    // const threadTs = previousNodeOutput['threadTs'] as string;
     if (!organizationId) {
     throw new Error("Input Processing must return an object with an 'organizationId'.");
     }
