@@ -7,11 +7,14 @@ import {
   userId,
   username,
   actions,
+  previousNodeOutput,
+  apiEndpoint,
 } from '../common/props';
 import { requestAction } from '../common/request-action';
+import { PieceAuth } from '@activepieces/pieces-framework';
 
 export const requestActionDirectMessageAction = createAction({
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   name: 'request_action_direct_message',
   displayName: 'Request Action from A User',
   description:
@@ -22,6 +25,8 @@ export const requestActionDirectMessageAction = createAction({
     actions,
     username,
     profilePicture,
+    apiEndpoint,
+    previousNodeOutput,
   },
   async run(context) {
     const { userId } = context.propsValue;

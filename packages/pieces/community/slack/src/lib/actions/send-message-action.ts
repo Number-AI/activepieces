@@ -5,7 +5,8 @@ import {
   username,
   blocks,
   singleSelectChannelInfo,
-  previousNodeOutput
+  previousNodeOutput,
+  apiEndpoint,
 } from '../common/props';
 import { processMessageTimestamp, slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
@@ -26,12 +27,7 @@ export const slackSendMessageAction = createAction({
       description: 'The text of your message',
       required: true,
     }),
-    apiEndpoint: Property.ShortText({
-        displayName: 'API Endpoint',
-        description: 'backend API endpoint to fetch Slack credentials',
-        required: true,
-        defaultValue: 'https://api.torvalds.dev/api/n8n/get_config_details'
-    }),
+    apiEndpoint,
     username,
     profilePicture,
     file: Property.File({
@@ -48,24 +44,23 @@ export const slackSendMessageAction = createAction({
     blocks,
   },
   async run(context) {
-    // const token = context.auth.access_token;
-    const { text, previousNodeOutput, username, profilePicture, threadTs, file,blocks, apiEndpoint } = context.propsValue;
-
-    const organizationId = previousNodeOutput['organizationId'] as string;
-    const channelId = previousNodeOutput['channelId'] as string;
+    const organizationId = context.propsValue.previousNodeOutput['organizationId'] as string;
+    const channelId = context.propsValue.previousNodeOutput['channelId'] as string;
+    const credentials = await SlackCredentialService
+    .getInstance()
+    .getCredentials(context.propsValue.apiEndpoint, organizationId);
     // const threadTs = previousNodeOutput['threadTs'] as string;
     if (!organizationId) {
     throw new Error("Input Processing must return an object with an 'organizationId'.");
     }
+    const token = credentials.access_token;
+    const { text, username, profilePicture, threadTs, file,blocks } = context.propsValue;
     
     const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
 
-    const credentials = await SlackCredentialService
-    .getInstance()
-    .getCredentials(apiEndpoint, organizationId);
 
     return slackSendMessage({
-    token: credentials.access_token,
+    token,
       text,
       username,
       profilePicture,

@@ -3,9 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { apiEndpoint, previousNodeOutput } from '../common/props';
+import { SlackCredentialService } from '../common/credential-service';
+import { PieceAuth } from '@activepieces/pieces-framework';
 
 export const setUserStatusAction = createAction({
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   name: 'slack-set-user-status',
   displayName: 'Set User Status',
   description: "Sets a user's custom status",
@@ -25,13 +28,22 @@ export const setUserStatusAction = createAction({
       description: 'Unix timestamp - if not set, the status will not expire',
       required: false,
     }),
+    previousNodeOutput,
+    apiEndpoint,
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       text: z.string().max(100),
     });
 
-    const client = new WebClient(auth.data['authed_user']?.access_token);
+    const { previousNodeOutput, apiEndpoint } = propsValue;
+    const organizationId = previousNodeOutput['organizationId'] as string;
+    if (!organizationId) {
+        throw new Error("Input Processing must return an object with an 'organizationId'.");
+    }
+
+    const credentials = await SlackCredentialService.getInstance().getCredentials(apiEndpoint, organizationId);
+    const client = new WebClient(credentials.access_token);
     return await client.users.profile.set({
       profile: {
         status_text: propsValue.text,
