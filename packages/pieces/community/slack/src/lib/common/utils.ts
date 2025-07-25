@@ -33,8 +33,6 @@ export const slackSendMessage = async ({
       icon_url: profilePicture,
       blocks: blocks as Block[],
       thread_ts: threadTs,
-      mrkdwn: true,
-      parse: 'full'
     });
   }
 };
