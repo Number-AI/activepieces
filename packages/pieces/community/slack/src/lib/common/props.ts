@@ -51,6 +51,7 @@ export const username = Property.ShortText({
   displayName: 'Username',
   description: 'The username of the bot',
   required: false,
+  defaultValue: 'TorvaldsFlows'
 });
 
 export const profilePicture = Property.ShortText({
