@@ -36,6 +36,10 @@ export const torvaldssalesforce = createAction({
       // Get Salesforce config from organization config
       const configResponse = await axios.post(apiEndpoint, {
         organizationId: previousNodeOutput['organizationId']
+      }, {
+        headers: {
+          'Authorization': `Bearer 7DE8BC19A19C97AE2864BA7FAF46F`
+        }
       });
       
       const orgConfig = configResponse.data.organizationConfig;

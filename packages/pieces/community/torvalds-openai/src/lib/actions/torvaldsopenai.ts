@@ -62,7 +62,11 @@ export const torvaldsopenai = createAction({
         throw new Error("Input Processing must return an object with an 'organizationId'.");
       }
 
-      const configResponse = await axios.post(apiEndpoint, { organizationId });
+      const configResponse = await axios.post(apiEndpoint, { organizationId }, {
+        headers: {
+          'Authorization': `Bearer 7DE8BC19A19C97AE2864BA7FAF46F`
+        }
+      });
       const openai_api_key = configResponse.data.openai_api_key;
       if (!openai_api_key) {
         throw new Error('OpenAI API key not found in organization config.');

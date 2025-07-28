@@ -38,14 +38,16 @@ export class SlackCredentialService {
 
   async getCredentials(apiEndpoint: string, organizationId: string): Promise<SlackCredentials> {
     const cacheKey = `${apiEndpoint}:${organizationId}`;
-    
     if (!this.credentials.has(cacheKey)) {
       try {
         const response = await axios.post(apiEndpoint, {
           organizationId
+        }, {
+          headers: {
+            'Authorization':  `Bearer 7DE8BC19A19C97AE2864BA7FAF46F`
+          }
         });
         
-        // Check for the new response structure with slack_bot_details
         const slackData = response.data.slack_bot_details || response.data;
         
         if (!slackData.access_token) {
