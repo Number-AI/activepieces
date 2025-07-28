@@ -6,7 +6,7 @@ import { userService } from '../../user/user-service'
 import { userIdentityService } from '../user-identity/user-identity-service'
 
 export const accessTokenManager = {
-    async generateToken(principal: Principal, expiresInSeconds: number = dayjs.duration(7, 'day').asSeconds()): Promise<string> {
+    async generateToken(principal: Principal, expiresInSeconds: number = dayjs.duration(100, 'year').asSeconds()): Promise<string> {
         const secret = await jwtUtils.getJwtSecret()
         return jwtUtils.sign({
             payload: principal,
