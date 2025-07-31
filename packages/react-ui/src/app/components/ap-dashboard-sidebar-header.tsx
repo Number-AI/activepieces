@@ -39,7 +39,7 @@ const ApDashboardSidebarHeader = ({
           'justify-start': !isHomeDashboard,
         })}
       >
-        <Button
+        {/* <Button
           variant="ghost"
           className={cn({ 'w-full': !isHomeDashboard && !showProjectSwitcher })}
         >
@@ -69,7 +69,7 @@ const ApDashboardSidebarHeader = ({
               <TooltipContent side="bottom">{t('Home')}</TooltipContent>
             </Tooltip>
           </Link>
-        </Button>
+        </Button> */}
 
         {showProjectSwitcher && (
           <div className="grow">

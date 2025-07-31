@@ -1,9 +1,12 @@
 import { slackAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
+import { PieceAuth } from '@activepieces/pieces-framework';
+import { previousNodeOutput, apiEndpoint } from '../common/props';
+import { SlackCredentialService } from '../common/credential-service';
 
 export const updateProfileAction = createAction({
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   name: 'slack-update-profile',
   displayName: 'Update Profile',
   description: 'Update basic profile field such as name or title.',
@@ -27,9 +30,16 @@ export const updateProfileAction = createAction({
         'ID of user to change. This argument may only be specified by admins on paid teams.You can use **Find User by Email** action to retrieve ID.',
       required: false,
     }),
+    previousNodeOutput,
+    apiEndpoint,
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.data['authed_user']?.access_token);
+    const organizationId = propsValue.previousNodeOutput['organizationId'] as string;
+    if (!organizationId) {
+      throw new Error("Input Processing must return an object with an 'organizationId'.");
+    }
+    const credentials = await SlackCredentialService.getInstance().getCredentials(propsValue.apiEndpoint, organizationId);
+    const client = new WebClient(credentials.access_token);
     return client.users.profile.set({
       profile: {
         first_name: propsValue.firstName,

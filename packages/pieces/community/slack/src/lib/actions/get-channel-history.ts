@@ -1,18 +1,20 @@
 import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { previousNodeOutput, singleSelectChannelInfo, slackChannel, apiEndpoint } from '../common/props';
+import { SlackCredentialService } from '../common/credential-service';
+import { PieceAuth } from '@activepieces/pieces-framework';
 
 export const getChannelHistory = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'getChannelHistory',
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   displayName: 'Get channel history',
   description:
     'Retrieve all messages from a specific channel ("conversation") between specified timestamps',
   props: {
-    info: singleSelectChannelInfo,
-    channel: slackChannel(true),
+    // info: singleSelectChannelInfo,
+    // channel: slackChannel(true),
     oldest: Property.Number({
       displayName: 'Oldest',
       description:
@@ -38,13 +40,24 @@ export const getChannelHistory = createAction({
       defaultValue: false,
       required: true,
     }),
+    previousNodeOutput,
+    apiEndpoint,
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.access_token);
+    const { previousNodeOutput, apiEndpoint } = propsValue;
+    const organizationId = previousNodeOutput['organizationId'] as string;
+            if (!organizationId) {
+            throw new Error("Input Processing must return an object with an 'organizationId'.");
+            }
+    const channel = previousNodeOutput['channelId'] as string;
+    const credentials = await SlackCredentialService
+                .getInstance()
+                .getCredentials(apiEndpoint, organizationId);
+    const client = new WebClient(credentials.access_token);
     const messages = [];
-    await client.conversations.history({ channel: propsValue.channel });
+    await client.conversations.history({ channel });
     for await (const page of client.paginate('conversations.history', {
-      channel: propsValue.channel,
+      channel,
       oldest: propsValue.oldest,
       latest: propsValue.latest,
       limit: 200, // page size, does not limit the total number of results

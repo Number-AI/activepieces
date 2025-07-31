@@ -86,7 +86,7 @@ export const slack = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   events: {
     parseAndReply: ({ payload }) => {
       const payloadBody = payload.body as PayloadBody;

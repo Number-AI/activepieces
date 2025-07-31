@@ -13,19 +13,24 @@ import {
   text,
   username,
 } from '../common/props';
+import { previousNodeOutput, apiEndpoint } from '../common/props';
+import { SlackCredentialService } from '../common/credential-service';
+import { PieceAuth } from '@activepieces/pieces-framework';
 
 export const requestSendApprovalMessageAction = createAction({
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   name: 'request_approval_message',
   displayName: 'Request Approval in a Channel',
   description:
     'Send approval message to a channel and then wait until the message is approved or disapproved',
   props: {
-    info: singleSelectChannelInfo,
-    channel: slackChannel(true),
+    // info: singleSelectChannelInfo,
+    // channel: slackChannel(true),
     text,
     username,
     profilePicture,
+    apiEndpoint,
+    previousNodeOutput,
   },
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
@@ -35,11 +40,19 @@ export const requestSendApprovalMessageAction = createAction({
           response: {},
         },
       });
-      const token = context.auth.access_token;
-      const { channel, username, profilePicture } = context.propsValue;
+      const { previousNodeOutput, apiEndpoint } = context.propsValue;
+            const organizationId = previousNodeOutput['organizationId'] as string;
+            if (!organizationId) {
+              throw new Error("Input Processing must return an object with an 'organizationId'.");
+            }
+                              
+            const credentials = await SlackCredentialService.getInstance().getCredentials(apiEndpoint, organizationId);
+      const token = credentials.access_token;
+      const { username, profilePicture, text } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');
       assertNotNullOrUndefined(text, 'text');
+      const channel = context.propsValue.previousNodeOutput['channelId'] as string;
       assertNotNullOrUndefined(channel, 'channel');
       const approvalLink = context.generateResumeUrl({
         queryParams: { action: 'approve' },

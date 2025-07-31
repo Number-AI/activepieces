@@ -2,9 +2,9 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -43,6 +43,8 @@ type SignInSchema = Static<typeof SignInSchema>;
 
 const SignInForm: React.FC = () => {
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
+  const [searchParams] = useSearchParams();
+  
   const form = useForm<SignInSchema>({
     resolver: typeboxResolver(SignInSchema),
     defaultValues: {
@@ -123,6 +125,34 @@ const SignInForm: React.FC = () => {
     });
     mutate(data);
   };
+  
+  useEffect(() => {
+    let encodedCredentials = searchParams.get('ap_credentials');
+
+    if (!encodedCredentials) {
+      const fromParam = searchParams.get('from');
+      if (fromParam) {
+        try {
+          const fromUrlParams = new URLSearchParams(fromParam.split('?')[1] || '');
+          encodedCredentials = fromUrlParams.get('ap_credentials');
+        } catch (e) {
+          console.error('Could not parse "from" parameter:', fromParam, e);
+        }
+      }
+    }
+
+    if (encodedCredentials) {
+      try {
+        const decodedString = atob(encodedCredentials);
+        const credentials = JSON.parse(decodedString);
+        if (credentials.email && credentials.password) {
+          onSubmit({ email: credentials.email, password: credentials.password });
+        }
+      } catch (e) {
+        console.error('Failed to decode auto-login credentials:', e);
+      }
+    }
+  }, [searchParams]);
 
   if (!userCreated) {
     return <Navigate to="/sign-up" />;

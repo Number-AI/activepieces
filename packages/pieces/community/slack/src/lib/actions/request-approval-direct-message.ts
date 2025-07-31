@@ -1,15 +1,17 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { slackSendMessage } from '../common/utils';
-import { slackAuth } from '../..';
+import { PieceAuth } from '@activepieces/pieces-framework';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
   PauseType,
 } from '@activepieces/shared';
 import { profilePicture, text, userId, username } from '../common/props';
+import { previousNodeOutput, apiEndpoint } from '../common/props';
+import { SlackCredentialService } from '../common/credential-service';
 
 export const requestApprovalDirectMessageAction = createAction({
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   name: 'request_approval_direct_message',
   displayName: 'Request Approval from A User',
   description:
@@ -19,6 +21,8 @@ export const requestApprovalDirectMessageAction = createAction({
     text,
     username,
     profilePicture,
+    apiEndpoint,
+    previousNodeOutput,
   },
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
@@ -28,7 +32,14 @@ export const requestApprovalDirectMessageAction = createAction({
           response: {},
         },
       });
-      const token = context.auth.access_token;
+      const { previousNodeOutput, apiEndpoint } = context.propsValue;
+      const organizationId = previousNodeOutput['organizationId'] as string;
+      if (!organizationId) {
+        throw new Error("Input Processing must return an object with an 'organizationId'.");
+      }
+                        
+      const credentials = await SlackCredentialService.getInstance().getCredentials(apiEndpoint, organizationId);
+      const token = credentials.access_token;
       const { userId, username, profilePicture } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');

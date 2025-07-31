@@ -190,7 +190,7 @@ export function SidebarComponent({
   return (
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
-        {!hideSideNav && (
+        {/* {!hideSideNav && (
           <Sidebar>
             <SidebarContent>
               <ApDashboardSidebarHeader isHomeDashboard={isHomeDashboard} />
@@ -248,7 +248,7 @@ export function SidebarComponent({
               </SidebarFooter>
             </SidebarContent>
           </Sidebar>
-        )}
+        )} */}
         <div
           className={cn('px-10 py-6 w-full', {
             'py-3': hideHeader,

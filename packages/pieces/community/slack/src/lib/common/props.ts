@@ -1,5 +1,6 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
+import { SlackCredentialService } from './credential-service';
 
 const slackChannelBotInstruction = `
 	Please make sure add the bot to the channel by following these steps:
@@ -26,7 +27,8 @@ export const slackChannel = <R extends boolean>(required: R) =>
       "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'",
     required,
     refreshers: [],
-    async options({ auth }) {
+    async options(context) {
+      const { auth, propsValue } = context;
       if (!auth) {
         return {
           disabled: true,
@@ -34,8 +36,17 @@ export const slackChannel = <R extends boolean>(required: R) =>
           options: [],
         };
       }
+      const { previousNodeOutput, apiEndpoint } = propsValue as Record<string, any>;
+      const organizationId = previousNodeOutput['organizationId'] as string;
+      if (!organizationId) {
+          throw new Error("Input Processing must return an object with an 'organizationId'.");
+      }
+      
+      const credentials = await SlackCredentialService
+                        .getInstance()
+                        .getCredentials(apiEndpoint, organizationId);
       const authentication = auth as OAuth2PropertyValue;
-      const accessToken = authentication['access_token'];
+      const accessToken = credentials.access_token;
 
       const channels = await getChannels(accessToken);
 
@@ -51,6 +62,7 @@ export const username = Property.ShortText({
   displayName: 'Username',
   description: 'The username of the bot',
   required: false,
+  defaultValue: 'TorvaldsFlows'
 });
 
 export const profilePicture = Property.ShortText({
@@ -69,7 +81,8 @@ export const userId = Property.Dropdown<string>({
   displayName: 'User',
   required: true,
   refreshers: [],
-  async options({ auth }) {
+  async options(context) {
+    const { auth, propsValue } = context;
     if (!auth) {
       return {
         disabled: true,
@@ -78,7 +91,16 @@ export const userId = Property.Dropdown<string>({
       };
     }
 
-    const accessToken = (auth as OAuth2PropertyValue).access_token;
+    const { previousNodeOutput, apiEndpoint } = propsValue as Record<string, any>;
+    const organizationId = previousNodeOutput['organizationId'] as string;
+    if (!organizationId) {
+        throw new Error("Input Processing must return an object with an 'organizationId'.");
+    }
+    
+    const credentials = await SlackCredentialService
+                    .getInstance()
+                    .getCredentials(apiEndpoint, organizationId);
+    const accessToken = credentials.access_token;
 
     const client = new WebClient(accessToken);
     const users: { label: string; value: string }[] = [];
@@ -141,3 +163,16 @@ export async function getChannels(accessToken: string) {
 
   return channels;
 }
+
+export const previousNodeOutput = Property.Json({
+    displayName: 'Node Input',
+    description: 'The full output from the previous node, e.g., {{trigger.body}}.',
+    required: true,
+});
+
+export const apiEndpoint = Property.ShortText({
+    displayName: 'API Endpoint',
+    description: 'Backend API endpoint to fetch Slack credentials',
+    required: true,
+    defaultValue: 'https://api.torvalds.dev/api/n8n/get_config_details'
+});

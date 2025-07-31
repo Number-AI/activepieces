@@ -8,12 +8,15 @@ import {
   userId,
   username,
   blocks,
+  previousNodeOutput,
+  apiEndpoint,
 } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
-
+import { PieceAuth } from '@activepieces/pieces-framework';
+import { SlackCredentialService } from '../common/credential-service';
 
 export const slackSendDirectMessageAction = createAction({
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   name: 'send_direct_message',
   displayName: 'Send Message To A User',
   description: 'Send message to a user',
@@ -23,9 +26,18 @@ export const slackSendDirectMessageAction = createAction({
     username,
     profilePicture,
     blocks,
+    previousNodeOutput,
+    apiEndpoint,
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const { previousNodeOutput, apiEndpoint } = context.propsValue;
+    const organizationId = previousNodeOutput['organizationId'] as string;
+    if (!organizationId) {
+      throw new Error("Input Processing must return an object with an 'organizationId'.");
+    }
+                            
+    const credentials = await SlackCredentialService.getInstance().getCredentials(apiEndpoint, organizationId);
+    const token = credentials.access_token;
     const { text, userId, blocks } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');

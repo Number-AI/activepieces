@@ -1,19 +1,22 @@
 import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { apiEndpoint, singleSelectChannelInfo, slackChannel } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
+import { previousNodeOutput } from '../common/props';
+import { SlackCredentialService } from '../common/credential-service';
 
 export const addRectionToMessageAction = createAction({
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   name: 'slack-add-reaction-to-message',
   displayName: 'Add Reaction to Message',
   description: 'Add an emoji reaction to a message.',
 
   props: {
-    info: singleSelectChannelInfo,
-    channel: slackChannel(true),
+    previousNodeOutput,
+    // info: singleSelectChannelInfo,
+    // channel: slackChannel(true),
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
@@ -25,12 +28,23 @@ export const addRectionToMessageAction = createAction({
       required: true,
       description: 'e.g.`thumbsup`',
     }),
+    apiEndpoint
   },
 
   async run(context) {
-    const { channel, ts, reaction } = context.propsValue;
+    const { ts, reaction, previousNodeOutput, apiEndpoint } = context.propsValue;
 
-    const slack = new WebClient(context.auth.access_token);
+    const organizationId = previousNodeOutput['organizationId'] as string;
+    if (!organizationId) {
+    throw new Error("Input Processing must return an object with an 'organizationId'.");
+    }
+    const channel = previousNodeOutput['channelId'] as string;
+
+    const credentials = await SlackCredentialService
+        .getInstance()
+        .getCredentials(apiEndpoint, organizationId);
+
+    const slack = new WebClient(credentials.access_token);
 
     const messageTimestamp = processMessageTimestamp(ts);
 

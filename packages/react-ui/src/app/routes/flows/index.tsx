@@ -118,7 +118,7 @@ const FlowsPage = () => {
                   {t('Runs')}
                 </TabsTrigger>
               )}
-              {checkAccess(Permission.READ_ISSUES) && (
+              {/* {checkAccess(Permission.READ_ISSUES) && (
                 <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
                   <CircleAlert className="h-4 w-4 mr-2" />
                   <span className="flex items-center gap-2">
@@ -128,7 +128,7 @@ const FlowsPage = () => {
                     )}
                   </span>
                 </TabsTrigger>
-              )}
+              )} */}
             </TabsList>
           ) : (
             <></>

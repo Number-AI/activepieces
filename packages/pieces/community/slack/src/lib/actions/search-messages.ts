@@ -1,20 +1,31 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { PieceAuth } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
+import { previousNodeOutput, apiEndpoint } from '../common/props';
+import { SlackCredentialService } from '../common/credential-service';
 
 export const searchMessages = createAction({
   name: 'searchMessages',
   displayName: 'Search messages',
   description: 'Searches for messages matching a query',
-  auth: slackAuth,
+  auth: PieceAuth.None(),
   props: {
     query: Property.ShortText({
       displayName: 'Search query',
       required: true,
     }),
+    previousNodeOutput,
+    apiEndpoint,
   },
   async run({ auth, propsValue }) {
-    const userToken = auth.data['authed_user']?.access_token;
+    const { previousNodeOutput, apiEndpoint } = propsValue;
+    const organizationId = previousNodeOutput['organizationId'] as string;
+    if (!organizationId) {
+      throw new Error("Input Processing must return an object with an 'organizationId'.");
+    }
+                            
+    const credentials = await SlackCredentialService.getInstance().getCredentials(apiEndpoint, organizationId);
+    const userToken = credentials.access_token;
     if (userToken === undefined) {
       throw new Error(JSON.stringify(
         {

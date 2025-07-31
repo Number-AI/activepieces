@@ -4,11 +4,17 @@ import {
   ExecutionType,
   PauseType,
 } from '@activepieces/shared';
+import { SlackCredentialService } from './credential-service';
 
 export const requestAction = async (conversationId: string, context: any) => {
-  const { actions } = context.propsValue;
+  const { actions, apiEndpoint, previousNodeOutput } = context.propsValue;
   assertNotNullOrUndefined(actions, 'actions');
-
+  const organizationId = previousNodeOutput['organizationId'] as string;
+  if (!organizationId) {
+      throw new Error("Input Processing must return an object with an 'organizationId'.");
+  }
+                  
+  const credentials = await SlackCredentialService.getInstance().getCredentials(apiEndpoint, organizationId);
   if (!actions.length) {
     throw new Error(`Must have at least one button action`);
   }
@@ -32,7 +38,7 @@ export const requestAction = async (conversationId: string, context: any) => {
       },
     });
 
-    const token = context.auth.access_token;
+    const token = credentials.access_token;
     const { text, username, profilePicture } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
