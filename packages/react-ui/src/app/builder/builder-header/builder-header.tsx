@@ -168,7 +168,7 @@ export const BuilderHeader = () => {
 
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
-          {showSupport && (
+          {/* {showSupport && (
             <Button
               variant="ghost"
               className="gap-2 px-2"
@@ -177,7 +177,7 @@ export const BuilderHeader = () => {
               <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
               {t('Support')}
             </Button>
-          )}
+          )} */}
           {hasPermissionToReadRuns && (
             <Button
               variant="ghost"
@@ -201,7 +201,7 @@ export const BuilderHeader = () => {
           )}
 
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
-          <UserAvatarMenu></UserAvatarMenu>
+          {/* <UserAvatarMenu></UserAvatarMenu> */}
         </div>
       </div>
     </div>
