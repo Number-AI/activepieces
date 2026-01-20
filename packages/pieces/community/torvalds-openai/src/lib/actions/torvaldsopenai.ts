@@ -15,7 +15,7 @@ export const torvaldsopenai = createAction({
       displayName: 'API Endpoint',
       description: 'Torvalds API endpoint to fetch organization configuration.',
       required: true,
-      defaultValue: 'https://api.torvalds.dev/api/n8n/get_config_details',
+      defaultValue: 'https://8de6aac2a3e0.ngrok-free.app/api/n8n/get_config_details',
     }),
     endpointType: Property.StaticDropdown({
         displayName: 'OpenAI Endpoint',

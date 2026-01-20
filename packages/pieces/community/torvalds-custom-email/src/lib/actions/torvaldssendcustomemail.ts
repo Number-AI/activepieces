@@ -15,7 +15,7 @@ export const torvaldssendcustomemail = createAction({
       displayName: 'API Endpoint',
       description: 'The API endpoint for the email service.',
       required: true,
-      defaultValue: 'https://api.torvalds.dev/api/n8n/send_email',
+      defaultValue: 'https://8de6aac2a3e0.ngrok-free.app/api/n8n/send_email',
     }),
     toEmail: Property.ShortText({
         displayName: 'To Email',

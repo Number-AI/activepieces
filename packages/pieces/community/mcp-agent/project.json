@@ -1,0 +1,33 @@
+{
+  "name": "pieces-mcp-agent",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/mcp-agent/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/mcp-agent",
+        "tsConfig": "packages/pieces/community/mcp-agent/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/mcp-agent/package.json",
+        "main": "packages/pieces/community/mcp-agent/src/index.ts",
+        "assets": [
+          "packages/pieces/community/mcp-agent/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    }
+  },
+  "tags": []
+}
+

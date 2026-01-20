@@ -83,7 +83,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
     async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
         try {
-            const paths = (await findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.includes(packageName)))
+            const paths = (await findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.endsWith(sep + packageName)))
             const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
             return pieces.filter((p): p is PieceMetadata => p !== null)
         }

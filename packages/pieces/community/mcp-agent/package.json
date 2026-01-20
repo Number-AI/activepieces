@@ -1,0 +1,15 @@
+{
+  "name": "@activepieces/piece-mcp-agent",
+  "version": "0.0.1",
+  "main": "./src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "typescript": "workspace:*"
+  }
+}
+

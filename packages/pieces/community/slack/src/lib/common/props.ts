@@ -174,5 +174,5 @@ export const apiEndpoint = Property.ShortText({
     displayName: 'API Endpoint',
     description: 'Backend API endpoint to fetch Slack credentials',
     required: true,
-    defaultValue: 'https://api.torvalds.dev/api/n8n/get_config_details'
+    defaultValue: 'https://8de6aac2a3e0.ngrok-free.app/api/n8n/get_config_details'
 });

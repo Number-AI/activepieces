@@ -526,6 +526,9 @@
         "packages/pieces/community/mautic/src/index.ts"
       ],
       "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-mcp-agent": [
+        "packages/pieces/community/mcp-agent/src/index.ts"
+      ],
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
